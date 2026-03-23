@@ -71,20 +71,29 @@ The skill-creator will:
 4. Set up references and scripts directories
 5. Package the skill into a .skill file
 
-**MANDATORY: After creating or committing a new skill, update both READMEs:**
-1. Add skill description to the appropriate category in `README.md` (English)
-2. Add skill description to the matching category in `README.ja.md` (Japanese)
-3. If the skill requires API keys, add it to the API Requirements table in `README.md` and the API要件 section in `README.ja.md`
-4. If a new category is needed, create it in both files
+**MANDATORY: After creating or committing a new skill, complete ALL of the following:**
+
+1. **Generate documentation pages** (auto-gen handles EN page + JA stub + index updates):
+   ```bash
+   python3 scripts/generate_skill_docs.py --skill <skill-name>
+   ```
+2. **Add to catalog category sections** in `docs/en/skill-catalog.md` and `docs/ja/skill-catalog.md`
+3. **Add to API Requirements Matrix** in both catalog files
+4. **Add to README** descriptions in `README.md` (English) and `README.ja.md` (Japanese)
+5. If the skill requires API keys, add to the API Requirements table in `README.md` and the API要件 section in `README.ja.md`
+6. If a new category is needed, create it in both READMEs and both catalogs
+
+> **Pre-commit enforcement:** The `docs-completeness` hook blocks commits if any `skills/*/SKILL.md` exists without corresponding `docs/en/skills/<name>.md` and `docs/ja/skills/<name>.md`. Run the generate command above to fix.
 
 ### Creating Documentation Site Pages
 
-After creating a new skill, generate documentation pages for the Jekyll site at `docs/`.
+Generate documentation pages for the Jekyll site at `docs/`.
 
 **Auto-generation (recommended for most skills):**
 
 ```bash
 # Generate 6-section EN page + JA stub for a specific skill
+# Also updates docs/en/skills/index.md and docs/ja/skills/index.md automatically
 python3 scripts/generate_skill_docs.py --skill <skill-name>
 
 # Regenerate all auto-generated pages
@@ -100,13 +109,18 @@ Required sections for ★ guides:
 5. Usage Examples  6. Understanding the Output  7. Tips & Best Practices
 8. Combining with Other Skills  9. Troubleshooting  10. Reference
 
-**MANDATORY for both methods:**
-1. Create pages in both `docs/en/skills/` and `docs/ja/skills/` (auto-gen handles this)
-2. Verify `lang_peer` links point correctly in both directions
-3. Add the skill to `docs/en/skills/index.md` and `docs/ja/skills/index.md` guide tables
-4. Add the skill to the appropriate category in `docs/en/skill-catalog.md` and `docs/ja/skill-catalog.md`
-5. Add the skill to the API Requirements Matrix in both catalog files
-6. See `docs/README.md` for frontmatter format, badge syntax, and complete checklist
+**What auto-generation handles vs. what requires manual work:**
+
+| Task | Auto-gen | Manual |
+|------|----------|--------|
+| EN doc page (`docs/en/skills/<name>.md`) | ✅ | -- |
+| JA doc stub (`docs/ja/skills/<name>.md`) | ✅ | -- |
+| Index table (`docs/{en,ja}/skills/index.md`) | ✅ | -- |
+| Catalog category section (`docs/{en,ja}/skill-catalog.md`) | -- | ✅ |
+| Catalog API Requirements Matrix | -- | ✅ |
+| README.md / README.ja.md | -- | ✅ |
+
+See `docs/README.md` for frontmatter format, badge syntax, and complete checklist.
 
 ### Packaging Skills for Distribution
 
@@ -142,6 +156,43 @@ When generating or modifying code in this repository, use a TDD-first workflow:
 4. Run the relevant test suite before finishing.
 
 If no test exists for the changed behavior, add one whenever practical.
+
+### Pre-commit Hooks
+
+This repository uses [pre-commit](https://pre-commit.com/) for automated quality checks. Install after cloning:
+
+```bash
+pre-commit install && pre-commit install --hook-type pre-push
+```
+
+**Pre-commit hooks (run on every commit):**
+
+| Hook | Source | What it checks |
+|------|--------|----------------|
+| trailing-whitespace | pre-commit-hooks | Trailing whitespace |
+| end-of-file-fixer | pre-commit-hooks | Missing newline at end of file |
+| check-yaml | pre-commit-hooks | YAML syntax |
+| check-toml | pre-commit-hooks | TOML syntax |
+| check-merge-conflict | pre-commit-hooks | Leftover conflict markers |
+| check-added-large-files | pre-commit-hooks | Files exceeding 500KB |
+| ruff | ruff-pre-commit | Python lint + auto-fix |
+| ruff-format | ruff-pre-commit | Python formatting |
+| codespell | codespell | Typo detection |
+| detect-secrets | detect-secrets | Secret/credential leaks |
+| no-absolute-paths | local | `/Users/username/` path leaks in public repo |
+| skill-frontmatter | local | SKILL.md `name` matches directory, `description` exists |
+| docs-completeness | local | Every `skills/*/SKILL.md` has EN + JA doc pages |
+
+**Pre-push hook:**
+
+| Hook | What it checks |
+|------|----------------|
+| pytest-pre-push | Runs all skill-level tests via `scripts/run_all_tests.sh` |
+
+**Suppressing false positives:**
+- `no-absolute-paths`: Add `# noqa: absolute-path` inline comment, or the hook auto-skips regex definitions and test files
+- Config: `.pre-commit-config.yaml`
+- Local hook scripts: `scripts/hooks/`
 
 ### API Key Management
 
