@@ -97,6 +97,7 @@ testpaths = [
     "skills/relative-strength-momentum-scanner/scripts/tests",
     "skills/signal-postmortem-analyzer/scripts/tests",
     "skills/downtrend-duration-analyzer/scripts/tests",
+    "skills/moving-average-regime-detector/scripts/tests",
     "scripts/tests",
 ]
 
